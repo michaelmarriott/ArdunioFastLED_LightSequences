@@ -1,0 +1,92 @@
+#include<FastLED.h>
+
+#define NUM_LEDS_PER_STRIP 150
+// Note: this can be 12 if you're using a teensy 3 and don't mind soldering the pads on the back
+#define NUM_STRIPS 8
+
+CRGB leds[NUM_STRIPS * NUM_LEDS_PER_STRIP];
+
+// Pin layouts on the teensy 3/3.1:
+// WS2811_PORTD: 2,14,7,8,6,20,21,5
+// WS2811_PORTC: 15,22,23,9,10,13,11,12,28,27,29,30 (these last 4 are pads on the bottom of the teensy)
+// WS2811_PORTDC: 2,14,7,8,6,20,21,5,15,22,23,9,10,13,11,12 - 16 way parallel
+//
+// Pin layouts on the due
+// WS2811_PORTA: 69,68,61,60,59,100,58,31 (note: pin 100 only available on the digix)
+// WS2811_PORTB: 90,91,92,93,94,95,96,97 (note: only available on the digix)
+// WS2811_PORTD: 25,26,27,28,14,15,29,11
+//
+uint16_t iterations = 40;
+uint16_t delayOfTranistions = 0;
+
+void setup() {
+   delay(1000);//Safe Gaurd
+    Serial.println("It has begun...");
+  // LEDS.addLeds<WS2811_PORTA,NUM_STRIPS>(leds, NUM_LEDS_PER_STRIP);
+  // LEDS.addLeds<WS2811_PORTB,NUM_STRIPS>(leds, NUM_LEDS_PER_STRIP);
+  // LEDS.addLeds<WS2811_PORTD,NUM_STRIPS>(leds, NUM_LEDS_PER_STRIP).setCorrection(TypicalLEDStrip);
+  LEDS.addLeds<WS2811_PORTD,NUM_STRIPS>(leds, NUM_LEDS_PER_STRIP);
+  LEDS.setBrightness(255);
+}
+
+void loop() {
+ // LEDS.show();
+  //LEDS.delay(10);
+  OscialateWrapper();
+}
+
+
+void OscialateWrapper() {
+  Serial.println("OscialateWrapper");
+  int middle = NUM_LEDS_PER_STRIP / 2;
+
+  FastLED.show(); // display this frame
+ LEDS.delay(10);
+
+  for (int y = 0; y < iterations; y++) {
+    Serial.println("Oscialate");
+    Oscialate(middle);
+  }
+}
+
+void Oscialate(int middle) {
+  CRGB wcolor = CRGB::WhiteSmoke;
+  int lengthOfOscilation = random8(16, middle - 1); 
+    
+  //Got Out
+    CRGB color = ChangeColor();
+     Serial.println("color");
+    for (int z = 0; z < lengthOfOscilation; z++) {
+      for (int i = 0; i < NUM_STRIPS; i++) {
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle - z)] = wcolor;
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle + z)] = wcolor;
+      }
+      FastLED.show(); // display this frame
+      LEDS.delay(1);
+      for (int i = 0; i < NUM_STRIPS; i++) {
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle - z)] = color;
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle + z)] = color;
+      }
+    }
+
+    //Go In
+    for (int z = lengthOfOscilation; z > 0; z--) {
+      for (int i = 0; i < NUM_STRIPS; i++) {
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle - z)] = wcolor;
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle + z)] = wcolor;
+      }
+      FastLED.show(); // display this frame
+      LEDS.delay(1);
+      for (int i = 0; i < NUM_STRIPS; i++) {
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle - z)] = color;
+        leds[(i*NUM_LEDS_PER_STRIP) + (middle + z)] = color;
+      }
+    }
+      Serial.println("Done");
+}
+
+
+CRGB ChangeColor(){
+  random16_add_entropy(random());
+  return CRGB(random8(), random8(), random8());
+}
